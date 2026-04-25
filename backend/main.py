@@ -1,3 +1,4 @@
+from streamlit import cursor
 import os
 import sqlite3
 import math
@@ -85,7 +86,7 @@ def get_analytics():
 
     # Get last 10 logs for each zone to show trends
 
-    conn.execute(
+    logs = conn.execute(
         """
         SELECT z.zone_name, l.occupancy, l.timestamp 
         FROM occupancy_logs l 
@@ -93,10 +94,8 @@ def get_analytics():
         ORDER BY l.timestamp DESC 
         LIMIT 50
         """
-    )
+    ).fetchall()
     
-    logs = conn.fetchall()
-
     conn.close()
     return [dict(l) for l in logs]
 
@@ -111,12 +110,10 @@ def get_recommendation(user_zone_id: int):
     for zone in zones_rows:
         z_id = zone['zone_id']
 
-        conn.execute(
+        logs = conn.execute(
             "SELECT occupancy FROM occupancy_logs WHERE zone_id = ? ORDER BY timestamp DESC LIMIT 5",
             (z_id,)
-        )
-
-        logs = conn.fetchall()
+        ).fetchall()
         
         if len(logs) >= 2:
             diff = logs[0][0] - logs[-1][0]

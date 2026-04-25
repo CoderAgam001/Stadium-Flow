@@ -52,4 +52,12 @@ def run_simulation():
         time.sleep(10)
 
 if __name__ == "__main__":
-    run_simulation()
+    try:
+        run_simulation()
+
+    except KeyboardInterrupt:
+        print("\nSimulation stopped by user.")
+        quit()
+
+    except Exception as e:
+        print(f"Error: {e}")

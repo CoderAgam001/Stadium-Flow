@@ -1,8 +1,12 @@
 import streamlit as st
 import requests
 import pandas as pd
+from dotenv import load_dotenv
+import os
 
-API_URL = "http://localhost:8000"
+load_dotenv()
+
+API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 st.set_page_config(page_title="Stadium Queue Rerouting", layout="wide", page_icon="🏟️")
 
@@ -56,7 +60,7 @@ with tab1:
         st.subheader("Detailed Zone Metrics")
         st.dataframe(
             df[['zone_id', 'zone_name', 'current_occupancy', 'capacity', 'Occupancy %']],
-            use_container_width=True,
+            width='stretch',
             hide_index=True
         )
     else:
