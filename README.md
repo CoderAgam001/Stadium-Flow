@@ -1,17 +1,15 @@
-# Stadium Flow: Predictive Queue Rerouting MVP
+# Stadium Flow: Smart AI Rerouting MVP
 
-Welcome to the **Stadium Flow App**, a predictive crowd management system designed for cricket stadiums. This system uses real-time simulation and AI-powered recommendations to guide fans to less crowded zones, ensuring a seamless stadium experience.
+Welcome to the **Stadium Flow App**, a premium, AI-powered crowd management system designed to optimize fan flow and reduce wait times at major sporting events using real-time predictive analytics and Google Gemini.
 
-This app is an MVP (Minimum Viable Product) that demonstrates the core functionality of the system. It is not yet fully functional, however you can explore it on your own.
-
-The future versions of the app could include real-time data of a stadium and could use the design system to implement the list features and actually help re-route fans to less crowded zones, minimizing congestion and improving the overall fan experience.
+This app is an MVP (Minimum Viable Product) that demonstrates the core functionality of the system. 
 
 ## Overview
 
 The system consists of three main components:
 1.  **Backend Agent (FastAPI):** Manages a SQLite database of stadium zones and hosts a background simulation engine.
 2.  **Logic Agent (Gemini AI):** Analyzes occupancy data and generates natural language routing recommendations using Gemini 1.5 Flash.
-3.  **Frontend Agent (Streamlit):** A dual-view dashboard for Admins (real-time monitoring) and Fans (personalized routing).
+3.  **Frontend Agent (Streamlit):** A role-based dashboard separating Admin analytics from Guest/Fan navigation.
 
 ---
 
@@ -68,33 +66,37 @@ streamlit run frontend/app.py
 
 ---
 
-## Features
+## ✨ Features & User Roles
 
-### Admin View
-*   **Real-time Monitoring:** A "Premier League" themed bar chart showing occupancy percentages across all stadium zones.
-*   **Data Table:** Detailed breakdown of current occupancy vs. total capacity.
+To ensure a streamlined, progressive experience, the app separates technical analytics from consumer usage.
 
-### Fan View
+### 🏃 Fan View (Guest)
+*   **No Login Required:** Fans land directly on a simplified, frictionless navigation screen.
 *   **Location Selection:** Fans select their current stand or washroom location.
-*   **Smart Rerouting:** If the current zone is >80% full, the "Find Shortest Path" engine finds the nearest zone with <50% occupancy.
-*   **AI Recommendations:** Generates human-friendly guidance (e.g., *"East Stand is crowded. Head 150m North to the Central Pavilion for zero wait time."*)
+*   **AI Smart Rerouting:** The engine analyzes crowd patterns and instantly outputs the optimal path visually, without confusing jargon.
+
+### 📊 Admin Dashboard (Secured)
+*   **Login Access:** Click "Login as Admin" in the top right corner. 
+    *   **Username:** `admin`
+    *   **Password:** `admin`
+*   **Predictive Logging:** A dedicated sidebar tracks historical occupancy trends for the AI to analyze.
+*   **Critical Alerts:** The system flags any zone exceeding 90% capacity.
+*   **Raw Data Access:** Admins can expand the raw dataframe to see exact occupancy vs capacity metrics.
 
 ---
 
-## System Architecture
+## 🏗️ System Architecture
 
-*   **Database:** `stadium_flow.db` (SQLite)
-*   **Simulation Engine:** `sim_engine.py` (Randomly updates occupancy every 10 seconds).
+*   **Database:** `stadium_flow.db` (SQLite) with an `occupancy_logs` table for trend tracking.
+*   **Simulation Engine:** `sim_engine.py` (Randomly updates occupancy and logs data every 10 seconds).
 *   **AI Engine:** `google-genai` (Gemini 1.5 Flash).
-*   **Theme:** Professional "Premier League" Red/White aesthetic.
+*   **Theme:** Premium, custom-styled Black aesthetic with dynamic CSS.
 
 ---
 
 [*Built with Google Gemini & Antigravity as part of the "Build With AI" series*](https://developers.google.com/community/build-with-ai)
 
-
 ## References
 * [Streamlit](https://streamlit.io/)
 * [FastAPI](https://fastapi.tiangolo.com/)
 * [Gemini AI](https://ai.google.dev/gemini-api)
-
