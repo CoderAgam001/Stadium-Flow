@@ -1,6 +1,7 @@
 import os
 import math
 import subprocess
+import sys
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -13,10 +14,10 @@ from backend.ai_service import ai_service
 async def lifespan(app: FastAPI):
     # Setup db if not exists
     if not os.path.exists(DB_PATH):
-        subprocess.run(["python", "backend/setup_db.py"])
+        subprocess.run([sys.executable, "backend/setup_db.py"])
     
     # Start sim_engine as background process
-    sim_process = subprocess.Popen(["python", "backend/sim_engine.py"])
+    sim_process = subprocess.Popen([sys.executable, "backend/sim_engine.py"])
     
     try:
         yield
