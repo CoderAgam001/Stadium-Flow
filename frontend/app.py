@@ -5,10 +5,59 @@ import time
 
 API_URL = "http://localhost:8000"
 
-st.set_page_config(page_title="Stadium Queue Rerouting", layout="wide")
+st.set_page_config(page_title="Stadium Queue Rerouting", layout="wide", page_icon="🏟️")
+
+# Premier League Theme CSS
+st.markdown("""
+    <style>
+    /* Global background and font */
+    .stApp {
+        background-color: #f4f4f6;
+        font-family: 'Inter', 'Helvetica Neue', sans-serif;
+    }
+    /* Headers */
+    h1, h2, h3 {
+        color: #e63946 !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.5px;
+    }
+    /* Primary buttons */
+    .stButton>button {
+        background-color: #e63946 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        border: none !important;
+        padding: 0.5rem 1rem !important;
+        font-weight: bold !important;
+        box-shadow: 0 4px 6px rgba(230, 57, 70, 0.2) !important;
+        transition: all 0.2s ease !important;
+    }
+    .stButton>button:hover {
+        background-color: #c1121f !important;
+        box-shadow: 0 6px 12px rgba(230, 57, 70, 0.3) !important;
+        transform: translateY(-2px);
+    }
+    /* Metrics */
+    div[data-testid="stMetricValue"] {
+        color: #e63946 !important;
+        font-weight: 700;
+    }
+    /* Selectbox styling */
+    div[data-baseweb="select"] > div {
+        border-radius: 8px;
+        border: 2px solid #e2e8f0;
+    }
+    /* Cards and containers */
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 1200px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 st.title("🏟️ Predictive Queue Rerouting MVP")
-st.markdown("### Cricket Stadium Crowd Management")
+st.markdown("### 🏏 Cricket Stadium Crowd Management")
 
 tab1, tab2 = st.tabs(["Admin Dashboard", "Fan View"])
 

@@ -1,13 +1,26 @@
 import os
 import sqlite3
 import math
+import subprocess
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
 from google import genai
 from google.genai import types
 
-app = FastAPI(title="Stadium Flow MVP")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Setup db if not exists
+    if not os.path.exists(DB_PATH):
+        subprocess.run(["python", "backend/setup_db.py"])
+    
+    # Start sim_engine as background process
+    sim_process = subprocess.Popen(["python", "backend/sim_engine.py"])
+    yield
+    sim_process.terminate()
+    
+app = FastAPI(title="Stadium Flow MVP", lifespan=lifespan)
 DB_PATH = 'stadium_flow.db'
 
 # Initialize Gemini Client
@@ -33,6 +46,16 @@ def get_db_connection():
 
 def calculate_distance(x1, y1, x2, y2):
     return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+def get_direction(x1, y1, x2, y2):
+    dx = x2 - x1
+    dy = y2 - y1
+    if dx == 0 and dy == 0:
+        return "nearby"
+    if abs(dx) > abs(dy):
+        return "East" if dx > 0 else "West"
+    else:
+        return "North" if dy > 0 else "South"
 
 @app.get("/zones", response_model=List[Zone])
 def get_zones():
@@ -77,6 +100,12 @@ def get_recommendation(user_zone_id: int):
             min_distance = dist
             closest_zone = candidate
 
+    # Calculate direction
+    direction = get_direction(
+        user_zone['x_coordinate'], user_zone['y_coordinate'],
+        closest_zone['x_coordinate'], closest_zone['y_coordinate']
+    )
+
     # Call Gemini to format natural language recommendation
     distance_meters = int(min_distance) # Just treat coordinates as meters for MVP
     
@@ -84,23 +113,24 @@ def get_recommendation(user_zone_id: int):
     You are a friendly and helpful predictive queue rerouting assistant for a cricket stadium.
     The user is currently at "{user_zone['zone_name']}" which is very crowded ({user_zone['current_occupancy']} out of {user_zone['capacity']} people).
     The best alternative is "{closest_zone['zone_name']}" which is only {int((closest_zone['current_occupancy']/closest_zone['capacity'])*100)}% full.
-    It is approximately {distance_meters} meters away.
+    It is approximately {distance_meters} meters {direction}.
     
-    Write a brief, friendly 1-2 sentence recommendation telling them their current zone is crowded and they should head to the alternative zone for a shorter wait time.
+    Write a brief, friendly 1-2 sentence recommendation telling them their current zone is crowded and they should head {direction} to the alternative zone for a shorter wait time.
+    Example format: "Zone A is crowded. Head 200m East to Zone C for zero wait time."
     """
 
     recommendation_text = ""
     if gemini_client:
         try:
             response = gemini_client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-1.5-flash',
                 contents=prompt
             )
             recommendation_text = response.text.strip()
         except Exception as e:
-            recommendation_text = f"Error calling Gemini: {e}. Fallback: Head to {closest_zone['zone_name']} ({distance_meters}m away) for shorter waits."
+            recommendation_text = f"Error calling Gemini: {e}. Fallback: Head {direction} to {closest_zone['zone_name']} ({distance_meters}m away) for shorter waits."
     else:
-         recommendation_text = f"GEMINI_API_KEY missing. Fallback: Head to {closest_zone['zone_name']} ({distance_meters}m away) for shorter waits."
+         recommendation_text = f"GEMINI_API_KEY missing. Fallback: Head {direction} to {closest_zone['zone_name']} ({distance_meters}m away) for shorter waits."
 
     return {
         "recommendation": recommendation_text,
