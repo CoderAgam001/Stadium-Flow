@@ -8,6 +8,9 @@ from pydantic import BaseModel
 from typing import List
 from google import genai
 from google.genai import types
+from dotenv import load_dotenv
+
+load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
