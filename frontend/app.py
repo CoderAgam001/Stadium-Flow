@@ -1,14 +1,11 @@
 import streamlit as st
 import requests
 import pandas as pd
-from dotenv import load_dotenv
 import os
+from frontend.config import API_URL, APP_TITLE, CACHE_TTL, CROWD_ALERT_THRESHOLD, ADMIN_USERNAME, ADMIN_PASSWORD
+from frontend.components import render_recommendation_card, render_live_counter
 
-load_dotenv()
-
-API_URL = os.getenv("API_URL", "http://localhost:8000")
-
-st.set_page_config(page_title="Stadium Queue Rerouting", layout="wide", page_icon="🏟️")
+st.set_page_config(page_title=APP_TITLE, layout="wide", page_icon="🏟️")
 
 # Load external CSS
 def local_css(file_name):
@@ -17,103 +14,158 @@ def local_css(file_name):
 
 local_css("frontend/style.css")
 
-st.title("🏟️ Stadium Flow: Smart Rerouting")
-st.markdown("<p class='feature-explanation'>Optimizing stadium crowd flow using real-time predictive analytics and AI.</p>", unsafe_allow_html=True)
+# Suggestion 3: Unified Session State
+if 'role' not in st.session_state:
+    st.session_state.role = "guest"
+if 'show_login' not in st.session_state:
+    st.session_state.show_login = False
 
-tab1, tab2 = st.tabs(["📊 Admin Dashboard", "🏃 Fan Navigation"])
+# Header & Authentication Logic
+col_title, col_login = st.columns([4, 1])
+with col_title:
+    st.title(f"🏟️ {APP_TITLE}")
 
+with col_login:
+    st.write("")
+    if st.session_state.role == "admin":
+        if st.button("Logout", key="logout_btn"):
+            st.session_state.role = "guest"
+            st.rerun()
+    else:
+        if st.button("Login as Admin", key="login_btn"):
+            st.session_state.show_login = not st.session_state.show_login
+
+# Login Form
+if st.session_state.show_login and st.session_state.role != "admin":
+    st.markdown("### Admin Login")
+    with st.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Login")
+        if submitted:
+            # Suggestion 7: Use credentials from config
+            if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+                st.session_state.role = "admin"
+                st.session_state.show_login = False
+                st.success("Logged in successfully!")
+                st.rerun()
+            else:
+                st.error("Invalid credentials")
+    # Stop rendering the rest of the app until logged in or cancelled
+    st.stop() 
+
+# Suggestion 2: Data Caching
+@st.cache_data(ttl=CACHE_TTL)
 def fetch_zones():
     try:
         response = requests.get(f"{API_URL}/zones")
         if response.status_code == 200:
             return response.json()
     except requests.exceptions.ConnectionError:
-        st.error("Backend server is not reachable. Is FastAPI running on port 8000?")
+        st.error("Backend server is not reachable.")
     return []
 
-with tab1:
-    st.header("Admin: Real-time Occupancy")
-    st.markdown("<p class='feature-explanation'>Monitor live crowd levels across stadium zones to identify potential bottlenecks.</p>", unsafe_allow_html=True)
-    
-    col1, col2 = st.columns([4, 1.2])
-    with col2:
-        st.info("💡 Predictive Sync Active")
-        if st.button("🔄 Manual Refresh", key="refresh_admin"):
-            st.rerun()
-        st.markdown("<p style='font-size: 0.8rem; color: #666;'>Occupancy trends are updated every 10 seconds.</p>", unsafe_allow_html=True)
+def fetch_analytics():
+    try:
+        response = requests.get(f"{API_URL}/analytics")
+        if response.status_code == 200:
+            return response.json()
+    except:
+        pass
+    return []
 
-    zones_data = fetch_zones()
+# ----------------- SHARED DATA -----------------
+zones_data = fetch_zones()
+
+# ----------------- ADMIN VIEW -----------------
+if st.session_state.role == "admin":
+    st.header("Admin Dashboard")
     
+    col_dash_1, col_dash_2 = st.columns([4, 1.2])
+    with col_dash_2:
+        st.info("💡 Predictive Sync Active")
+        if st.button("🔄 Manual Refresh"):
+            st.cache_data.clear()
+            st.rerun()
+
     if zones_data:
         df = pd.DataFrame(zones_data)
         df['Occupancy %'] = (df['current_occupancy'] / df['capacity']) * 100
         
-        # Overcrowding Alerts
-        overcrowded = df[df['Occupancy %'] > 90]
+        # Critical Alerts Only
+        overcrowded = df[df['Occupancy %'] > CROWD_ALERT_THRESHOLD]
         if not overcrowded.empty:
             for _, row in overcrowded.iterrows():
-                st.warning(f"🚨 **ALERT:** {row['zone_name']} is critically crowded ({row['Occupancy %']:.1f}%)!")
+                st.warning(f"🚨 **CRITICAL:** {row['zone_name']} is at {row['Occupancy %']:.1f}% capacity!")
 
-        st.subheader("Visual Flow Analytics")
+        # Live Occupancy
+        st.subheader("Live Occupancy")
         st.bar_chart(df.set_index('zone_name')['Occupancy %'], color="#e63946")
         
-        st.subheader("Detailed Zone Metrics")
-        st.dataframe(
-            df[['zone_id', 'zone_name', 'current_occupancy', 'capacity', 'Occupancy %']],
-            width='stretch',
-            hide_index=True
-        )
+        with st.expander("View Raw Data"):
+            df['Occupancy %'] = df['Occupancy %'].round(1)
+            st.dataframe(
+                df[['zone_id', 'zone_name', 'current_occupancy', 'capacity', 'Occupancy %']],
+                use_container_width=True,
+                hide_index=True
+            )
     else:
-        st.info("Connecting to sensor network... Please ensure backend is active.")
+        st.info("Connecting to sensor network...")
 
-with tab2:
-    st.header("Fan: Personalized Navigation")
-    st.markdown("<p class='feature-explanation'>Navigate the stadium efficiently with AI-powered route recommendations to avoid busy queues.</p>", unsafe_allow_html=True)
+    # Sidebar Analytics exclusively for Admin
+    with st.sidebar:
+        st.header("📈 Prediction Log")
+        analytics_data = fetch_analytics()
+        if analytics_data:
+            a_df = pd.DataFrame(analytics_data)
+            st.dataframe(a_df, hide_index=True, height=400)
+        else:
+            st.info("Analytics stream offline.")
+
+# ----------------- FAN VIEW (GUEST) -----------------
+else:
+    st.header("Find Your Way")
     
-    zones_data = fetch_zones()
     if zones_data:
         zone_options = {z['zone_name']: z['zone_id'] for z in zones_data}
         
-        col_f1, col_f2 = st.columns([2, 1])
-        with col_f1:
-            selected_zone_name = st.selectbox("📍 Your Current Location", list(zone_options.keys()))
-            st.markdown("<p class='feature-explanation'>Select your current location to receive tailored rerouting advice.</p>", unsafe_allow_html=True)
+        col_start, col_dest = st.columns(2)
+        with col_start:
+            selected_start_name = st.selectbox("📍 Starting Point", list(zone_options.keys()), key="start_pos")
+        with col_dest:
+            selected_dest_name = st.selectbox("🏁 End Destination", list(zone_options.keys()), key="dest_pos")
         
-        with col_f2:
-            st.write("") # Spacer
-            st.write("") # Spacer
-            if st.button("🚀 Find Optimal Path", type="primary"):
-                user_zone_id = zone_options[selected_zone_name]
-                
-                with st.spinner("Analyzing crowd patterns and trends..."):
+        output_placeholder = st.empty()
+        st.write("") 
+
+        if st.button("🚀 Find Optimal Path", type="primary", use_container_width=True):
+            start_id = zone_options[selected_start_name]
+            dest_id = zone_options[selected_dest_name]
+            
+            if start_id == dest_id:
+                st.info("You are already at your destination!")
+            else:
+                with st.spinner("Calculating optimal route..."):
                     try:
-                        response = requests.get(f"{API_URL}/get_recommendation/{user_zone_id}")
+                        response = requests.get(f"{API_URL}/get_recommendation/{start_id}/{dest_id}")
                         if response.status_code == 200:
                             data = response.json()
-                            st.success(f"**AI Recommendation:** {data.get('recommendation', 'No recommendation generated.')}")
-                            
-                            if data.get('recommended_zone') and data['recommended_zone'] != "None":
-                                st.metric(label=f"Destination: {data['recommended_zone']}", value=f"{data['distance']} meters")
-                                st.markdown("<p class='feature-explanation'>AI analyzed current occupancy and trends to find this optimal path.</p>", unsafe_allow_html=True)
-                        elif response.status_code == 404:
-                            st.error("Zone not found.")
+                            with output_placeholder.container():
+                                # Suggestion 1: Use Modular Component
+                                render_recommendation_card(
+                                    data.get('recommendation'),
+                                    data.get('key_note'),
+                                    data.get('distance')
+                                )
                         else:
-                            st.error(f"Error: {response.status_code}")
-                    except requests.exceptions.ConnectionError:
-                        st.error("Backend server is not reachable.")
+                            st.error(f"Routing Error: {response.status_code}")
+                    except Exception as e:
+                        st.error(f"Connection failed: {e}")
     else:
         st.info("Waiting for stadium zone data...")
 
-# Sidebar Analytics for trends
-with st.sidebar:
-    st.header("📈 Prediction Log")
-    st.markdown("<p style='font-size: 0.8rem; color: #888;'>Real-time occupancy logs for AI trend analysis.</p>", unsafe_allow_html=True)
-    try:
-        analytics_resp = requests.get(f"{API_URL}/analytics")
-        if analytics_resp.status_code == 200:
-            analytics_data = analytics_resp.json()
-            if analytics_data:
-                a_df = pd.DataFrame(analytics_data)
-                st.dataframe(a_df, hide_index=True, height=400)
-    except:
-        st.info("Analytics stream offline.")
+# ----------------- LIVE COUNTERS (BOTTOM) -----------------
+if zones_data:
+    washroom_occupancy = sum(z['current_occupancy'] for z in zones_data if "Washroom" in z['zone_name'])
+    # Suggestion 1: Use Modular Component
+    render_live_counter(washroom_occupancy)
