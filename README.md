@@ -8,7 +8,9 @@ This app is an MVP (Minimum Viable Product) that demonstrates the core functiona
 
 The system consists of three main components:
 1.  **Backend Agent (FastAPI):** Manages a SQLite database of stadium zones and hosts a background simulation engine.
+
 2.  **Logic Agent (Gemini AI):** Analyzes occupancy data and generates natural language routing recommendations using Gemini 1.5 Flash.
+
 3.  **Frontend Agent (Streamlit):** A role-based dashboard separating Admin analytics from Guest/Fan navigation.
 
 ---
@@ -66,21 +68,28 @@ streamlit run frontend/app.py
 
 ---
 
-## ✨ Features & User Roles
+## Features & User Roles
 
 To ensure a streamlined, progressive experience, the app separates technical analytics from consumer usage.
 
-### 🏃 Fan View (Guest)
+### Fan View (Guest)
 *   **No Login Required:** Fans land directly on a simplified, frictionless navigation screen.
+
 *   **Location Selection:** Fans select their current stand or washroom location.
+
 *   **AI Smart Rerouting:** The engine analyzes crowd patterns and instantly outputs the optimal path visually, without confusing jargon.
 
-### 📊 Admin Dashboard (Secured)
+### Admin Dashboard (Secured)
 *   **Login Access:** Click "Login as Admin" in the top right corner. 
     *   **Username:** `admin`
     *   **Password:** `admin`
+    
+    *Note: these credentials are for the **MVP only** and future versions will have proper authentication as well as authorization.*
+
 *   **Predictive Logging:** A dedicated sidebar tracks historical occupancy trends for the AI to analyze.
+
 *   **Critical Alerts:** The system flags any zone exceeding 90% capacity.
+
 *   **Raw Data Access:** Admins can expand the raw dataframe to see exact occupancy vs capacity metrics.
 
 ---
