@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import pandas as pd
-import time
 
 API_URL = "http://localhost:8000"
 
@@ -56,7 +55,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🏟️ Predictive Queue Rerouting MVP")
+st.title("🏟️ Predictive Queue Rerouting App")
 st.markdown("### 🏏 Cricket Stadium Crowd Management")
 
 tab1, tab2 = st.tabs(["Admin Dashboard", "Fan View"])
