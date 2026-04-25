@@ -74,12 +74,35 @@ To ensure a streamlined, progressive experience, the app separates technical ana
 
 ---
 
+## ☁️ Cloud Deployment (Google Cloud Run)
+
+This project is Docker-ready for deployment to Google Cloud Run.
+
+### 1. Build the Image
+Build and push your container to Google Container Registry (replace `PROJECT_ID` with your actual project id):
+```bash
+gcloud builds submit --tag gcr.io/PROJECT_ID/stadium-flow-ai
+```
+
+### 2. Deploy to Cloud Run
+Launch the service with your Gemini API key:
+```bash
+gcloud run deploy stadium-flow-ai \
+    --image gcr.io/PROJECT_ID/stadium-flow-ai \
+    --platform managed \
+    --region us-central1 \
+    --allow-unauthenticated \
+    --set-env-vars="GEMINI_API_KEY=your_actual_key_here"
+```
+
+---
+
 ## System Architecture
 
 *   **Database:** `stadium_flow.db` (SQLite) with an `occupancy_logs` table for trend tracking.
 *   **Simulation Engine:** `sim_engine.py` (Randomly updates occupancy and logs data every 10 seconds).
-*   **AI Engine:** `google-genai` (Gemini 1.5 Flash).
-*   **Theme:** Premium, custom-styled Black aesthetic with dynamic CSS.
+*   **AI Engine:** `google-genai` (Gemini 2.5 Flash).
+*   **Theme:** Premium, custom-styled Black aesthetic with dynamic CSS components.
 
 ---
 
