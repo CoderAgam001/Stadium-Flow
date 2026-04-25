@@ -90,7 +90,8 @@ streamlit run frontend/app.py
 
 ---
 
-*Developed as a Predictive Stadium Queue Rerouting MVP.*
+[*Built with Google Gemini & Antigravity as part of the "Build With AI" series*](https://developers.google.com/community/build-with-ai)
+
 
 ## References
 * [Streamlit](https://streamlit.io/)
