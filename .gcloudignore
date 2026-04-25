@@ -1,0 +1,13 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+*.db
+.git
+.gitignore
+.dockerignore
+LICENSE
+README.md
+setup.ps1
+run.ps1
+problem statement.jpeg
