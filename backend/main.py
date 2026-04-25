@@ -14,13 +14,16 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    
     # Setup db if not exists
     if not os.path.exists(DB_PATH):
         subprocess.run(["python", "backend/setup_db.py"])
     
     # Start sim_engine as background process
     sim_process = subprocess.Popen(["python", "backend/sim_engine.py"])
+    
     yield
+    
     sim_process.terminate()
     
 app = FastAPI(title="Stadium Flow MVP", lifespan=lifespan)
@@ -28,8 +31,10 @@ DB_PATH = 'stadium_flow.db'
 
 # Initialize Gemini Client
 # It will automatically look for GEMINI_API_KEY in the environment
+
 try:
     gemini_client = genai.Client()
+
 except Exception as e:
     print(f"Warning: Failed to initialize Gemini Client. Make sure GEMINI_API_KEY is set. Error: {e}")
     gemini_client = None
@@ -53,31 +58,45 @@ def calculate_distance(x1, y1, x2, y2):
 def get_direction(x1, y1, x2, y2):
     dx = x2 - x1
     dy = y2 - y1
+
     if dx == 0 and dy == 0:
         return "nearby"
+
     if abs(dx) > abs(dy):
         return "East" if dx > 0 else "West"
+
     else:
         return "North" if dy > 0 else "South"
 
 @app.get("/zones", response_model=List[Zone])
+
 def get_zones():
     conn = get_db_connection()
     zones = conn.execute("SELECT * FROM zones").fetchall()
+
     conn.close()
+
     return [dict(z) for z in zones]
 
 @app.get("/analytics")
+
 def get_analytics():
     conn = get_db_connection()
+
     # Get last 10 logs for each zone to show trends
-    logs = conn.execute("""
+
+    conn.execute(
+        """
         SELECT z.zone_name, l.occupancy, l.timestamp 
         FROM occupancy_logs l 
         JOIN zones z ON l.zone_id = z.zone_id 
         ORDER BY l.timestamp DESC 
         LIMIT 50
-    """).fetchall()
+        """
+    )
+    
+    logs = conn.fetchall()
+
     conn.close()
     return [dict(l) for l in logs]
 
@@ -88,21 +107,28 @@ def get_recommendation(user_zone_id: int):
     
     # Calculate trends (simple linear trend from last 5 logs)
     trends = {}
+
     for zone in zones_rows:
         z_id = zone['zone_id']
-        logs = conn.execute(
+
+        conn.execute(
             "SELECT occupancy FROM occupancy_logs WHERE zone_id = ? ORDER BY timestamp DESC LIMIT 5",
             (z_id,)
-        ).fetchall()
+        )
+
+        logs = conn.fetchall()
+        
         if len(logs) >= 2:
             diff = logs[0][0] - logs[-1][0]
             trends[z_id] = "increasing" if diff > 0 else "decreasing" if diff < 0 else "stable"
+        
         else:
             trends[z_id] = "stable"
     
     conn.close()
 
     zones = [dict(z) for z in zones_rows]
+
     user_zone = next((z for z in zones if z['zone_id'] == user_zone_id), None)
 
     if not user_zone:
@@ -111,8 +137,11 @@ def get_recommendation(user_zone_id: int):
     occupancy_pct = user_zone['current_occupancy'] / user_zone['capacity']
     
     # Context for Gemini
+
     stadium_context = []
+
     for z in zones:
+
         stadium_context.append({
             "name": z["zone_name"],
             "occupancy": f"{z['current_occupancy']}/{z['capacity']}",
@@ -143,21 +172,28 @@ def get_recommendation(user_zone_id: int):
     dist = 0
 
     if gemini_client:
+        
         try:
             response = gemini_client.models.generate_content(
                 model='gemini-1.5-flash',
                 contents=prompt
             )
+         
             # Simple parsing for the MVP
             text = response.text
+        
             recommendation_text = text.split("Recommendation:")[1].split("Target Zone:")[0].strip() if "Recommendation:" in text else text
+         
             if "Target Zone:" in text:
                 target_zone = text.split("Target Zone:")[1].split("Distance:")[0].strip()
+         
             if "Distance:" in text:
                 try:
                     dist = int(text.split("Distance:")[1].strip().split(" ")[0])
+         
                 except:
                     dist = 0
+        
         except Exception as e:
             recommendation_text = f"AI Routing Error: {e}. Fallback: Head to Pavilion."
     

@@ -4,7 +4,6 @@ import os
 DB_PATH = 'stadium_flow.db'
 
 def setup_database():
-    # Remove existing db for clean setup during MVP iteration
     if os.path.exists(DB_PATH):
         os.remove(DB_PATH)
 
@@ -13,7 +12,7 @@ def setup_database():
 
     # Create zones table
     cursor.execute('''
-        CREATE TABLE zones (
+        CREATE TABLE if not exists zones (
             zone_id INTEGER PRIMARY KEY,
             zone_name TEXT NOT NULL,
             current_occupancy INTEGER NOT NULL,
@@ -25,7 +24,7 @@ def setup_database():
 
     # Create occupancy_logs table for predictive analytics
     cursor.execute('''
-        CREATE TABLE occupancy_logs (
+        CREATE TABLE if not exists occupancy_logs (
             log_id INTEGER PRIMARY KEY AUTOINCREMENT,
             zone_id INTEGER,
             occupancy INTEGER,
@@ -43,10 +42,12 @@ def setup_database():
         (5, 'Central Pavilion', 0, 300, 0.0, 0.0)
     ]
 
-    cursor.executemany('''
+    cursor.executemany(
+        '''
         INSERT INTO zones (zone_id, zone_name, current_occupancy, capacity, x_coordinate, y_coordinate)
         VALUES (?, ?, ?, ?, ?, ?)
-    ''', zones_data)
+        ''' , zones_data
+    )
 
     conn.commit()
     conn.close()
