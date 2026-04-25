@@ -104,6 +104,10 @@ gcloud run deploy stadium-flow-ai \
 *   **AI Engine:** `google-genai` (Gemini 2.5 Flash).
 *   **Theme:** Premium, custom-styled Black aesthetic with dynamic CSS components.
 
+## 📄 License
+
+This project is licensed under the **MIT License**. You are free to use, modify, and distribute the code, provided that the original copyright notice and attribution are included. See the [LICENSE](LICENSE) file for more details.
+
 ---
 
 [*Built with Google Gemini & Antigravity as part of the "Build With AI" series*](https://developers.google.com/community/build-with-ai)
