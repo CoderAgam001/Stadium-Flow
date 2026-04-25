@@ -33,10 +33,10 @@ with tab1:
     
     col1, col2 = st.columns([4, 1.2])
     with col2:
-        st.info("💡 Keep data updated")
-        if st.button("🔄 Sync Live Data", key="refresh_admin"):
+        st.info("💡 Predictive Sync Active")
+        if st.button("🔄 Manual Refresh", key="refresh_admin"):
             st.rerun()
-        st.markdown("<p style='font-size: 0.8rem; color: #666;'>Pull the latest occupancy metrics from the stadium sensors.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 0.8rem; color: #666;'>Occupancy trends are updated every 10 seconds.</p>", unsafe_allow_html=True)
 
     zones_data = fetch_zones()
     
@@ -44,6 +44,12 @@ with tab1:
         df = pd.DataFrame(zones_data)
         df['Occupancy %'] = (df['current_occupancy'] / df['capacity']) * 100
         
+        # Overcrowding Alerts
+        overcrowded = df[df['Occupancy %'] > 90]
+        if not overcrowded.empty:
+            for _, row in overcrowded.iterrows():
+                st.warning(f"🚨 **ALERT:** {row['zone_name']} is critically crowded ({row['Occupancy %']:.1f}%)!")
+
         st.subheader("Visual Flow Analytics")
         st.bar_chart(df.set_index('zone_name')['Occupancy %'], color="#e63946")
         
@@ -75,16 +81,16 @@ with tab2:
             if st.button("🚀 Find Optimal Path", type="primary"):
                 user_zone_id = zone_options[selected_zone_name]
                 
-                with st.spinner("Analyzing crowd patterns..."):
+                with st.spinner("Analyzing crowd patterns and trends..."):
                     try:
                         response = requests.get(f"{API_URL}/get_recommendation/{user_zone_id}")
                         if response.status_code == 200:
                             data = response.json()
-                            st.success(f"**Recommendation:** {data.get('recommendation', 'No recommendation generated.')}")
-                            st.markdown("<p class='feature-explanation'>AI suggested route based on the lowest predicted wait times.</p>", unsafe_allow_html=True)
+                            st.success(f"**AI Recommendation:** {data.get('recommendation', 'No recommendation generated.')}")
                             
-                            if "recommended_zone" in data:
-                                st.metric(label="Estimated Walking Distance", value=f"{data['distance']} meters")
+                            if data.get('recommended_zone') and data['recommended_zone'] != "None":
+                                st.metric(label=f"Destination: {data['recommended_zone']}", value=f"{data['distance']} meters")
+                                st.markdown("<p class='feature-explanation'>AI analyzed current occupancy and trends to find this optimal path.</p>", unsafe_allow_html=True)
                         elif response.status_code == 404:
                             st.error("Zone not found.")
                         else:
@@ -93,3 +99,17 @@ with tab2:
                         st.error("Backend server is not reachable.")
     else:
         st.info("Waiting for stadium zone data...")
+
+# Sidebar Analytics for trends
+with st.sidebar:
+    st.header("📈 Prediction Log")
+    st.markdown("<p style='font-size: 0.8rem; color: #888;'>Real-time occupancy logs for AI trend analysis.</p>", unsafe_allow_html=True)
+    try:
+        analytics_resp = requests.get(f"{API_URL}/analytics")
+        if analytics_resp.status_code == 200:
+            analytics_data = analytics_resp.json()
+            if analytics_data:
+                a_df = pd.DataFrame(analytics_data)
+                st.dataframe(a_df, hide_index=True, height=400)
+    except:
+        st.info("Analytics stream offline.")

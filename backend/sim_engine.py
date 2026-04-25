@@ -32,6 +32,12 @@ def run_simulation():
                     "UPDATE zones SET current_occupancy = ? WHERE zone_id = ?",
                     (new_occ, zone_id)
                 )
+
+                # Record log for prediction
+                cursor.execute(
+                    "INSERT INTO occupancy_logs (zone_id, occupancy) VALUES (?, ?)",
+                    (zone_id, new_occ)
+                )
             
             conn.commit()
             conn.close()

@@ -23,6 +23,17 @@ def setup_database():
         )
     ''')
 
+    # Create occupancy_logs table for predictive analytics
+    cursor.execute('''
+        CREATE TABLE occupancy_logs (
+            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            zone_id INTEGER,
+            occupancy INTEGER,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (zone_id) REFERENCES zones(zone_id)
+        )
+    ''')
+
     # Initial data for 5 zones
     zones_data = [
         (1, 'North Stand Washroom', 0, 100, 0.0, 100.0),

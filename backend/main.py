@@ -67,10 +67,39 @@ def get_zones():
     conn.close()
     return [dict(z) for z in zones]
 
+@app.get("/analytics")
+def get_analytics():
+    conn = get_db_connection()
+    # Get last 10 logs for each zone to show trends
+    logs = conn.execute("""
+        SELECT z.zone_name, l.occupancy, l.timestamp 
+        FROM occupancy_logs l 
+        JOIN zones z ON l.zone_id = z.zone_id 
+        ORDER BY l.timestamp DESC 
+        LIMIT 50
+    """).fetchall()
+    conn.close()
+    return [dict(l) for l in logs]
+
 @app.get("/get_recommendation/{user_zone_id}")
 def get_recommendation(user_zone_id: int):
     conn = get_db_connection()
     zones_rows = conn.execute("SELECT * FROM zones").fetchall()
+    
+    # Calculate trends (simple linear trend from last 5 logs)
+    trends = {}
+    for zone in zones_rows:
+        z_id = zone['zone_id']
+        logs = conn.execute(
+            "SELECT occupancy FROM occupancy_logs WHERE zone_id = ? ORDER BY timestamp DESC LIMIT 5",
+            (z_id,)
+        ).fetchall()
+        if len(logs) >= 2:
+            diff = logs[0][0] - logs[-1][0]
+            trends[z_id] = "increasing" if diff > 0 else "decreasing" if diff < 0 else "stable"
+        else:
+            trends[z_id] = "stable"
+    
     conn.close()
 
     zones = [dict(z) for z in zones_rows]
@@ -80,66 +109,63 @@ def get_recommendation(user_zone_id: int):
         raise HTTPException(status_code=404, detail="Zone not found")
 
     occupancy_pct = user_zone['current_occupancy'] / user_zone['capacity']
-
-    if occupancy_pct <= 0.8:
-        return {"recommendation": f"You are currently at {user_zone['zone_name']}. The area is not too crowded ({(occupancy_pct*100):.1f}% full). No need to relocate!"}
-
-    # If > 80%, find closest zone under 50%
-    candidate_zones = [z for z in zones if (z['current_occupancy'] / z['capacity']) < 0.5]
-
-    if not candidate_zones:
-        return {"recommendation": f"You are at {user_zone['zone_name']}, which is very crowded. Unfortunately, all other zones are also quite full right now."}
-
-    # Find closest candidate
-    closest_zone = None
-    min_distance = float('inf')
-
-    for candidate in candidate_zones:
-        dist = calculate_distance(
-            user_zone['x_coordinate'], user_zone['y_coordinate'],
-            candidate['x_coordinate'], candidate['y_coordinate']
-        )
-        if dist < min_distance:
-            min_distance = dist
-            closest_zone = candidate
-
-    # Calculate direction
-    direction = get_direction(
-        user_zone['x_coordinate'], user_zone['y_coordinate'],
-        closest_zone['x_coordinate'], closest_zone['y_coordinate']
-    )
-
-    # Call Gemini to format natural language recommendation
-    distance_meters = int(min_distance) # Just treat coordinates as meters for MVP
     
+    # Context for Gemini
+    stadium_context = []
+    for z in zones:
+        stadium_context.append({
+            "name": z["zone_name"],
+            "occupancy": f"{z['current_occupancy']}/{z['capacity']}",
+            "trend": trends.get(z['zone_id'], "stable"),
+            "distance_from_user": int(calculate_distance(user_zone['x_coordinate'], user_zone['y_coordinate'], z['x_coordinate'], z['y_coordinate']))
+        })
+
     prompt = f"""
-    You are a friendly and helpful predictive queue rerouting assistant for a cricket stadium.
-    The user is currently at "{user_zone['zone_name']}" which is very crowded ({user_zone['current_occupancy']} out of {user_zone['capacity']} people).
-    The best alternative is "{closest_zone['zone_name']}" which is only {int((closest_zone['current_occupancy']/closest_zone['capacity'])*100)}% full.
-    It is approximately {distance_meters} meters {direction}.
+    You are an AI Crowd Controller for a Cricket Stadium.
+    User Location: {user_zone['zone_name']} (Current: {user_zone['current_occupancy']}/{user_zone['capacity']}, Trend: {trends.get(user_zone_id, 'stable')})
     
-    Write a brief, friendly 1-2 sentence recommendation telling them their current zone is crowded and they should head {direction} to the alternative zone for a shorter wait time.
-    Example format: "Zone A is crowded. Head 200m East to Zone C for zero wait time."
+    Stadium State:
+    {stadium_context}
+    
+    TASK:
+    1. Analyze if the user's current zone is getting too crowded (>80% or high increasing trend).
+    2. If yes, pick the BEST alternative zone. Consider distance, current occupancy, AND trend (avoid zones with fast increasing trends).
+    3. Write a friendly, 2-sentence recommendation. Mention the "predicted" state if a trend is high.
+    
+    Format:
+    Recommendation: [Your text]
+    Target Zone: [Name of recommended zone or 'None']
+    Distance: [Distance in meters or 0]
     """
 
-    recommendation_text = ""
+    recommendation_text = "Standard routing logic applies. Stay put or check nearby zones."
+    target_zone = "None"
+    dist = 0
+
     if gemini_client:
         try:
             response = gemini_client.models.generate_content(
                 model='gemini-1.5-flash',
                 contents=prompt
             )
-            recommendation_text = response.text.strip()
+            # Simple parsing for the MVP
+            text = response.text
+            recommendation_text = text.split("Recommendation:")[1].split("Target Zone:")[0].strip() if "Recommendation:" in text else text
+            if "Target Zone:" in text:
+                target_zone = text.split("Target Zone:")[1].split("Distance:")[0].strip()
+            if "Distance:" in text:
+                try:
+                    dist = int(text.split("Distance:")[1].strip().split(" ")[0])
+                except:
+                    dist = 0
         except Exception as e:
-            recommendation_text = f"Error calling Gemini: {e}. Fallback: Head {direction} to {closest_zone['zone_name']} ({distance_meters}m away) for shorter waits."
-    else:
-         recommendation_text = f"GEMINI_API_KEY missing. Fallback: Head {direction} to {closest_zone['zone_name']} ({distance_meters}m away) for shorter waits."
-
+            recommendation_text = f"AI Routing Error: {e}. Fallback: Head to Pavilion."
+    
     return {
         "recommendation": recommendation_text,
         "current_zone": user_zone['zone_name'],
-        "recommended_zone": closest_zone['zone_name'],
-        "distance": distance_meters
+        "recommended_zone": target_zone,
+        "distance": dist
     }
 
 if __name__ == "__main__":
