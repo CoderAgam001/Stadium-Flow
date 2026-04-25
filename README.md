@@ -1,8 +1,12 @@
-# 🏟️ Stadium Flow: Predictive Queue Rerouting MVP
+# Stadium Flow: Predictive Queue Rerouting MVP
 
-Welcome to the **Stadium Flow MVP**, a predictive crowd management system designed for cricket stadiums. This system uses real-time simulation and AI-powered recommendations to guide fans to less crowded zones, ensuring a seamless stadium experience.
+Welcome to the **Stadium Flow App**, a predictive crowd management system designed for cricket stadiums. This system uses real-time simulation and AI-powered recommendations to guide fans to less crowded zones, ensuring a seamless stadium experience.
 
-## 🚀 Overview
+This app is an MVP (Minimum Viable Product) that demonstrates the core functionality of the system. It is not yet fully functional, however you can explore it on your own.
+
+The future versions of the app could include real-time data of a stadium and could use the design system to implement the list features and actually help re-route fans to less crowded zones, minimizing congestion and improving the overall fan experience.
+
+## Overview
 
 The system consists of three main components:
 1.  **Backend Agent (FastAPI):** Manages a SQLite database of stadium zones and hosts a background simulation engine.
@@ -11,7 +15,7 @@ The system consists of three main components:
 
 ---
 
-## 🛠️ Setup Instructions
+## Setup Instructions
 
 ### 1. Environment Configuration
 Ensure you have Python 3.9+ installed. It is recommended to use a virtual environment.
@@ -41,7 +45,7 @@ python backend/setup_db.py
 
 ---
 
-## 🏃 How to Run
+## How to Run
 
 You can run the entire system using the provided PowerShell script or manually.
 
@@ -64,7 +68,7 @@ streamlit run frontend/app.py
 
 ---
 
-## 📊 Features
+## Features
 
 ### Admin View
 *   **Real-time Monitoring:** A "Premier League" themed bar chart showing occupancy percentages across all stadium zones.
@@ -77,7 +81,7 @@ streamlit run frontend/app.py
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 *   **Database:** `stadium_flow.db` (SQLite)
 *   **Simulation Engine:** `sim_engine.py` (Randomly updates occupancy every 10 seconds).
@@ -87,3 +91,9 @@ streamlit run frontend/app.py
 ---
 
 *Developed as a Predictive Stadium Queue Rerouting MVP.*
+
+## References
+* [Streamlit](https://streamlit.io/)
+* [FastAPI](https://fastapi.tiangolo.com/)
+* [Gemini AI](https://ai.google.dev/gemini-api)
+
