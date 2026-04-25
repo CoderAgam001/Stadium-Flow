@@ -1,13 +1,17 @@
 # Predictive Queue Rerouting MVP Startup Script
 
+$VENV_PYTHON = ".venv/Scripts/python.exe"
+$VENV_UVICORN = ".venv/Scripts/uvicorn.exe"
+$VENV_STREAMLIT = ".venv/Scripts/streamlit.exe"
+
 Write-Host "Initializing Database..."
-python backend/setup_db.py
+& $VENV_PYTHON backend/setup_db.py
 
 Write-Host "Starting Simulation Engine in Background..."
-Start-Process -NoNewWindow -FilePath "python" -ArgumentList "backend/sim_engine.py"
+Start-Process -NoNewWindow -FilePath $VENV_PYTHON -ArgumentList "backend/sim_engine.py"
 
 Write-Host "Starting FastAPI Backend..."
-Start-Process -NoNewWindow -FilePath "uvicorn" -ArgumentList "backend.main:app", "--reload"
+Start-Process -NoNewWindow -FilePath $VENV_UVICORN -ArgumentList "backend.main:app", "--reload"
 
 Write-Host "Starting Streamlit Frontend..."
-streamlit run frontend/app.py
+& $VENV_STREAMLIT run frontend/app.py
