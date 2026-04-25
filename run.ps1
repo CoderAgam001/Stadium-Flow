@@ -5,6 +5,9 @@ if (Test-Path ".venv/Scripts/Activate.ps1") {
     . .venv/Scripts/Activate.ps1
 }
 
+# Ensure the project root is in the Python path for module imports
+$env:PYTHONPATH = $PSScriptRoot
+
 # Set the paths to the executables in the virtual environment
 $VENV_PYTHON = ".venv/Scripts/python.exe"
 $VENV_UVICORN = ".venv/Scripts/uvicorn.exe"
