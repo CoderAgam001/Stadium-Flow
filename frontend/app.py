@@ -6,75 +6,12 @@ API_URL = "http://localhost:8000"
 
 st.set_page_config(page_title="Stadium Queue Rerouting", layout="wide", page_icon="🏟️")
 
-# Black Theme CSS with Premium Aesthetics
-st.markdown("""
-    <style>
-    /* Global background and font */
-    .stApp {
-        background-color: #000000;
-        color: #ffffff;
-        font-family: 'Inter', 'Helvetica Neue', sans-serif;
-    }
-    /* Headers */
-    h1, h2, h3 {
-        color: #e63946 !important;
-        font-weight: 800 !important;
-        letter-spacing: -1px;
-    }
-    /* Primary buttons */
-    .stButton>button {
-        background-color: #e63946 !important;
-        color: white !important;
-        border-radius: 12px !important;
-        border: none !important;
-        padding: 0.6rem 1.2rem !important;
-        font-weight: 600 !important;
-        box-shadow: 0 4px 15px rgba(230, 57, 70, 0.3) !important;
-        transition: all 0.3s ease !important;
-        width: 100%;
-    }
-    .stButton>button:hover {
-        background-color: #ff4d5a !important;
-        box-shadow: 0 8px 25px rgba(230, 57, 70, 0.5) !important;
-        transform: translateY(-2px);
-    }
-    /* Metrics */
-    div[data-testid="stMetric"] {
-        background-color: #111111;
-        padding: 15px;
-        border-radius: 12px;
-        border: 1px solid #222222;
-    }
-    div[data-testid="stMetricValue"] {
-        color: #e63946 !important;
-        font-weight: 800;
-    }
-    /* Selectbox styling */
-    div[data-baseweb="select"] > div {
-        background-color: #111111 !important;
-        color: white !important;
-        border-radius: 10px;
-        border: 1px solid #333333 !important;
-    }
-    /* Cards and containers */
-    .block-container {
-        padding-top: 3rem !important;
-        padding-bottom: 3rem !important;
-        max-width: 1100px;
-    }
-    /* Explanation text */
-    .feature-explanation {
-        color: #888888;
-        font-size: 0.9rem;
-        margin-bottom: 1rem;
-    }
-    /* Dataframe styling */
-    .stDataFrame {
-        border: 1px solid #222222;
-        border-radius: 12px;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# Load external CSS
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+local_css("frontend/style.css")
 
 st.title("🏟️ Stadium Flow: Smart Rerouting")
 st.markdown("<p class='feature-explanation'>Optimizing stadium crowd flow using real-time predictive analytics and AI.</p>", unsafe_allow_html=True)
