@@ -7,20 +7,18 @@ from frontend.components import render_recommendation_card, render_live_counter
 
 st.set_page_config(page_title=APP_TITLE, layout="wide", page_icon="🏟️")
 
-# Load external CSS
 def local_css(file_name):
     with open(file_name) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 local_css("frontend/style.css")
 
-# Suggestion 3: Unified Session State
 if 'role' not in st.session_state:
     st.session_state.role = "guest"
+
 if 'show_login' not in st.session_state:
     st.session_state.show_login = False
 
-# Header & Authentication Logic
 col_title, col_login = st.columns([4, 1])
 with col_title:
     st.title(f"🏟️ {APP_TITLE}")
@@ -43,7 +41,6 @@ if st.session_state.show_login and st.session_state.role != "admin":
         password = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Login")
         if submitted:
-            # Suggestion 7: Use credentials from config
             if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
                 st.session_state.role = "admin"
                 st.session_state.show_login = False
@@ -51,10 +48,8 @@ if st.session_state.show_login and st.session_state.role != "admin":
                 st.rerun()
             else:
                 st.error("Invalid credentials")
-    # Stop rendering the rest of the app until logged in or cancelled
     st.stop() 
 
-# Suggestion 2: Data Caching
 @st.cache_data(ttl=CACHE_TTL)
 def fetch_zones():
     try:
@@ -74,10 +69,8 @@ def fetch_analytics():
         pass
     return []
 
-# ----------------- SHARED DATA -----------------
 zones_data = fetch_zones()
 
-# ----------------- ADMIN VIEW -----------------
 if st.session_state.role == "admin":
     st.header("Admin Dashboard")
     
@@ -122,7 +115,6 @@ if st.session_state.role == "admin":
         else:
             st.info("Analytics stream offline.")
 
-# ----------------- FAN VIEW (GUEST) -----------------
 else:
     st.header("Find Your Way")
     
@@ -151,7 +143,6 @@ else:
                         if response.status_code == 200:
                             data = response.json()
                             with output_placeholder.container():
-                                # Suggestion 1: Use Modular Component
                                 render_recommendation_card(
                                     data.get('recommendation'),
                                     data.get('key_note'),
@@ -164,8 +155,6 @@ else:
     else:
         st.info("Waiting for stadium zone data...")
 
-# ----------------- LIVE COUNTERS (BOTTOM) -----------------
 if zones_data:
     washroom_occupancy = sum(z['current_occupancy'] for z in zones_data if "Washroom" in z['zone_name'])
-    # Suggestion 1: Use Modular Component
     render_live_counter(washroom_occupancy)

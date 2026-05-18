@@ -22,7 +22,6 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        # Suggestion 6: Ensure process is killed reliably
         sim_process.terminate()
         try:
             sim_process.wait(timeout=5)
@@ -74,7 +73,6 @@ def get_recommendation(user_zone_id: int, dest_zone_id: int):
             "trend": trends.get(z['zone_id'], "stable")
         })
 
-    # Suggestion 8: Use AI service with structured output
     ai_result = ai_service.get_structured_recommendation(
         user_zone, dest_zone, stadium_context, trends, dist_to_dest
     )
