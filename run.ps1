@@ -23,7 +23,7 @@ Start-Process -NoNewWindow -FilePath $VENV_PYTHON -ArgumentList "backend/sim_eng
 
 # Start FastAPI Backend
 Write-Host "Starting FastAPI Backend..."
-Start-Process -NoNewWindow -FilePath $VENV_UVICORN -ArgumentList "backend.main:app", "--reload"
+Start-Process -NoNewWindow -FilePath $VENV_UVICORN -ArgumentList "backend/main.py", "--reload"
 
 # Start Streamlit Frontend
 Write-Host "Starting Streamlit Frontend..."
