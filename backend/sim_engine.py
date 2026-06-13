@@ -21,10 +21,7 @@ def run_simulation():
             zones = cursor.fetchall()
             
             for zone_id, current_occ, capacity in zones:
-                # Randomly change occupancy by -15% to +15% of capacity
-                ## This randomness is implemented for testing purposes of the MVP only. 
-                ## Future versions could utilize real world data for use cases.
-                 
+                # Randomly change occupancy by -15% to +15% of capacity                
                 change = int(capacity * random.uniform(-0.15, 0.15))
                 new_occ = current_occ + change
                 
