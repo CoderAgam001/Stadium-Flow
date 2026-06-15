@@ -10,11 +10,13 @@ This app is an MVP (Minimum Viable Product) that demonstrates the core functiona
 
 📄 **[Read the Agentic Logic Blueprint (Markdown)](BLUEPRINT.md)**
 
+🧑🏻‍💻 **[Access the Agentic System Prompt (Markdown)](PROMPT.md)**
+
 ## System Architecture
 
-The system consists of three main components:
-
 ![Stadium Flow System Architecture](sf_workflow_diagram.svg)
+
+The system consists of three main components:
 
 1. **Orchestration Layer (FastAPI):** Manages a SQLite database of stadium zones and hosts a background simulation engine.
 
@@ -22,9 +24,7 @@ The system consists of three main components:
 
 3. **Cognitive Layer (Gemini 2.5 Flash):** Analyzes occupancy data and generates natural language routing recommendations using Gemini 2.5 Flash.
 
----
-
-## Quick Start
+## Quick Start (Cross-Platform)
 
 To make it easy for the users to review the project, one-click scripts for setup and execution have been included.
 
@@ -54,17 +54,52 @@ Once setup is complete, launch the entire stack with:
 ./run.ps1
 ```
 
----
-
-## Manual Installation (Optional)
+## Manual Configuration
 
 If you prefer to set up the environment manually:
 
-1. **Create Venv**: `python -m venv .venv`
-2. **Install Deps**: `pip install -r requirements.txt`
-3. **Init DB**: `python backend/setup_db.py`
+### 1. Setup a Virtual Environment
 
----
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+### 2. Install System Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Create a *.env* file with your Gemini API Key
+
+```bash
+echo "GEMINI_API_KEY=your_actual_api_key_here" > .env
+```
+
+### 4. Initialize the Database Schema
+
+```bash
+python backend/setup_db.py
+```
+
+### 5. Start the Simulation Engine in Background
+
+```bash
+python backend/sim_engine.py
+```
+
+### 6. Start FastAPI Backend
+
+```bash
+python backend/main.py
+```
+
+### 7. Start Streamlit Frontend
+
+```bash
+python frontend/app.py
+```
 
 ## Features & User Roles
 
@@ -90,11 +125,9 @@ To ensure a streamlined, progressive experience, the app separates technical ana
 
     *Note: these credentials are for the **MVP only** and future versions will have proper authentication as well as authorization.*
 
----
-
 ## Cloud Deployment (Google Cloud Run)
 
-This project is Docker-ready for deployment to Google Cloud Run.
+This project is Docker-ready for deployment to Google Cloud Run, for serverless, zero-scale container hosting.
 
 ### 1. Build the Image
 
@@ -117,8 +150,6 @@ gcloud run deploy stadium-flow-ai
     --set-env-vars="GEMINI_API_KEY=your_actual_key_here"
 ```
 
----
-
 ## Tech Stack & File Structure
 
 * **Database:** SQLite (`stadium_flow.db`) utilizing an `occupancy_logs` table for trend tracking and local state management.
@@ -133,12 +164,12 @@ gcloud run deploy stadium-flow-ai
 
 This project is licensed under the **MIT License**. You are free to use, modify, and distribute the code, provided that the original copyright notice and attribution are included. See the [LICENSE](LICENSE) file for more details.
 
----
-
-[*Built with 🤍, using Google Gemini & Antigravity as part of the "Build With AI" series*](https://developers.google.com/community/build-with-ai)
-
 ## References
 
 * [Streamlit](https://docs.streamlit.io/)
 * [FastAPI](https://fastapi.tiangolo.com/)
 * [Gemini AI](https://ai.google.dev/gemini-api)
+
+[*Built using Google Gemini & Antigravity as part of the "Build With AI" series*](https://developers.google.com/community/build-with-ai)
+
+*$* [**Agamdeep Singh**](https://linktr.ee/coderagam001)
